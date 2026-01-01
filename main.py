@@ -3,14 +3,11 @@
 # LICENSE file in the root directory of this source tree.
 
 import argparse
-import os
-
-import pickle
-import shutil
 
 import time
 
-import cv2 as cv
+from pathlib import Path
+
 import numpy as np
 import omegaconf
 import torch
@@ -19,26 +16,16 @@ import torch
 # since torchsparse changed their datastructures in newer versions
 
 import trimesh
+from dataset.shaper_dataset import InferenceDataset
 
 from misc import get_local_path, setup_download_override
 from model.flow_matching.shaper_denoiser import ShapeRDenoiser
 from model.text.hf_embedder import TextFeatureExtractor
 from model.vae3d.autoencoder import MichelangeloLikeAutoencoderWrapper
+from preprocessing.helper import remove_floating_geometry
+from tqdm import tqdm
 
 # @lint-ignore-every PYTHONPICKLEISBAD
-
-from preprocessing.helper import (
-    crop_and_resize,
-    get_caption,
-    pad_for_rectification,
-    preprocess_point_cloud,
-    project_point_to_image,
-    rectify_images,
-    remove_floating_geometry,
-    rotate_extrinsics_ccw90,
-    rotate_intrinsics_ccw90,
-)
-from preprocessing.view_selection_heuristic import view_angle_based_strategy
 
 
 def main():
@@ -79,9 +66,9 @@ def main():
         help="Simplify the mesh.",
     )
     parser.add_argument(
-        "--output_path",
+        "--output_dir",
         type=str,
-        default="mesh.glb",
+        default="output",
         help="Path to the output mesh.",
     )
     parser.add_argument(
@@ -89,6 +76,12 @@ def main():
         action="store_true",
         help="Test with local weights override",
     )
+    parser.add_argument(
+        "--do_transform_to_world",
+        action="store_true",
+        help="Transform the mesh to world coordinates.",
+    )
+
     args = parser.parse_args()
 
     if args.test_local_weight_override:
@@ -100,6 +93,10 @@ def main():
             "/home/yawarnihal/shaper_weights/vae-config.yaml",
             "/home/yawarnihal/shaper_weights/dinov2_vitl14_reg4_pretrain.pth",
         )
+
+    output_dir = Path(args.output_dir)
+    if not output_dir.exists():
+        output_dir.mkdir(parents=True, exist_ok=True)
 
     # load the checkpoint
     if not args.ckpt_file.startswith("manifold://"):
@@ -147,31 +144,21 @@ def main():
         args.input_pkl = "manifold://" + args.input_pkl
 
     print("Loading input pkl from", args.input_pkl)
-    pkl_sample = pickle.load(open(get_local_path(args.input_pkl), "rb"))
-
-    for ctr in range(5):
-        print("-" * 20)
-        print(f"Running inference {ctr+1}...")
-
-        # create torchsparse tensor
-        batch_sdp = preprocess_point_cloud(
-            [semi_dense_points],
-            num_bins=config.encoder.num_bins,
-        )
-
-        batch = {
-            "index": [0],
-            "name": ["test"],
-            "semi_dense_points": batch_sdp,
-            "images": crops.unsqueeze(0).to(torch.bfloat16),
-            "masks_ingest": mask_ingests.to(torch.bfloat16),
-            "camera_extrinsics": camera_extrinsics.unsqueeze(0).to(torch.bfloat16),
-            "camera_intrinsics": camera_params.unsqueeze(0).to(torch.bfloat16),
-            "boxes_ingest": boxes_ingest.to(torch.bfloat16),
-            "caption": [get_caption(pkl_sample)],
-        }
-
-        with torch.no_grad():
+    inference_dataset = InferenceDataset(
+        config,
+        paths=[args.input_pkl],
+    )
+    inference_loader = torch.utils.data.DataLoader(
+        inference_dataset,
+        batch_size=1,
+        shuffle=False,
+        drop_last=False,
+        num_workers=0,
+        collate_fn=inference_dataset.custom_collate,
+    )
+    with torch.no_grad():
+        for batch in tqdm(inference_loader):
+            batch = InferenceDataset.move_batch_to_device(batch, device)
             t_inference = time.time()
             latents_pred = model.infer_latents(
                 batch,
@@ -188,18 +175,16 @@ def main():
                 mesh = remove_floating_geometry(mesh)
             # simplify the mesh otherwise it will be too large if you mesh it at 128x128x128 resolution
             if args.simplify_mesh:
-                mesh = mesh.simplify_quadric_decimation(face_count=75000)
+                mesh = mesh.simplify_quadric_decimation(face_count=125000)
             # rescale back to the original scale
-            bounds = pkl_sample["halfBounds"].cpu().numpy()
-            scale = 0.9 / np.max(bounds)
-            mesh.apply_scale(1 / scale)
+            mesh = inference_dataset.rescale_back(
+                batch["index"][0], mesh, args.do_transform_to_world
+            )
             tmp_output_path_mesh = "/tmp/mesh.obj"
             mesh.export(tmp_output_path_mesh)
             # convert to glb
             mesh = trimesh.load(tmp_output_path_mesh, force="mesh")
-            if not args.output_path.endswith(".glb"):
-                args.output_path += ".glb"
-            mesh.export(args.output_path, include_normals=True)
+            mesh.export(output_dir / (batch["name"][0] + ".glb"), include_normals=True)
 
 
 if __name__ == "__main__":

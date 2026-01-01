@@ -5,7 +5,6 @@
 import os
 import pickle
 
-import cv2 as cv
 import numpy as np
 import torch
 import torchsparse
@@ -120,21 +119,6 @@ class InferenceDataset(torch.utils.data.Dataset):
             )
 
             sample["images"] = np.concatenate(selected_view_imgs_list, axis=0)
-
-            if self.use_image_denoising:
-                for img_idx in range(len(sample["images"])):
-                    noisy_image = (
-                        (sample["images"][img_idx] * 255)
-                        .transpose((1, 2, 0))
-                        .astype(np.uint8)
-                    )
-                    denoised_image = cv.fastNlMeansDenoisingColored(
-                        noisy_image, None, 3, 3, 7, 21
-                    )
-                    sample["images"][img_idx] = (
-                        denoised_image.astype(np.float32).transpose((2, 0, 1)) / 255.0
-                    )
-
             sample["masks_ingest"] = np.concatenate(rectified_masks_list, axis=0)
             sample["boxes_ingest"] = get_boxes_from_masks(sample["masks_ingest"])
             sample["camera_extrinsics"] = np.concatenate(selected_view_ext_list, axis=0)
