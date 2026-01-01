@@ -9,7 +9,6 @@
 # pyre-unsafe
 
 import torch
-from misc import get_local_path
 from torch import nn, Tensor
 from transformers import CLIPTextModel, CLIPTokenizer, T5EncoderModel, T5Tokenizer
 
@@ -68,11 +67,8 @@ class HFEmbedder(nn.Module):
 
 
 def load_t5(device, max_length=256):
-    local_t5 = get_local_path(
-        "manifold://efm_public/tree/pretrained_weights/t5/t5-v1_1-xl", recursive=True
-    )
     return HFEmbedder(
-        local_t5,
+        "google/t5-v1_1-xl",
         is_clip=False,
         max_length=max_length,
         torch_dtype=torch.bfloat16,
@@ -80,12 +76,11 @@ def load_t5(device, max_length=256):
 
 
 def load_clip(device):
-    local_clip = get_local_path(
-        "manifold://efm_public/tree/pretrained_weights/clip_hf/clip-vit-large-patch14",
-        recursive=True,
-    )
     return HFEmbedder(
-        local_clip, is_clip=True, max_length=77, torch_dtype=torch.bfloat16
+        "openai/clip-vit-large-patch14",
+        is_clip=True,
+        max_length=77,
+        torch_dtype=torch.bfloat16,
     ).to(device)
 
 

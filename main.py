@@ -14,6 +14,7 @@ import cv2 as cv
 import numpy as np
 import omegaconf
 import torch
+
 # important! We are using an old version of torchsparse, please use the fbcode version otherwise you will get errors,\
 # since torchsparse changed their datastructures in newer versions
 
@@ -84,20 +85,11 @@ def main():
         help="Path to the output mesh.",
     )
     parser.add_argument(
-        "--clean-cache",
-        action="store_true",
-        help="Clean manifold cache.",
-    )
-    parser.add_argument(
         "--test_local_weight_override",
         action="store_true",
         help="Test with local weights override",
     )
     args = parser.parse_args()
-
-    if args.clean_cache:
-        if os.path.exists("/tmp/manifold_downloads"):
-            shutil.rmtree("/tmp/manifold_downloads", ignore_errors=True)
 
     if args.test_local_weight_override:
         # example override of weights stored in /home/yawarnihal/shaper_weights
@@ -107,8 +99,6 @@ def main():
             "/home/yawarnihal/shaper_weights/vae-088-0-bfloat16.ckpt",
             "/home/yawarnihal/shaper_weights/vae-config.yaml",
             "/home/yawarnihal/shaper_weights/dinov2_vitl14_reg4_pretrain.pth",
-            "/home/yawarnihal/shaper_weights/t5-v1_1-xl",
-            "/home/yawarnihal/shaper_weights/clip-vit-large-patch14",
         )
 
     # load the checkpoint

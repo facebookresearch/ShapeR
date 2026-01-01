@@ -13,10 +13,6 @@ URL_DENOISER_CONFIG = "manifold://yawarnihal/tree/share/ShapeR/ase-itp-text_280-
 URL_VAE = "manifold://yawarnihal/tree/share/ShapeR/ase-itp-text_280-DiG-sflux-2v_1B/vae-088-0-bfloat16.ckpt"
 URL_VAE_CONFIG = "manifold://yawarnihal/tree/share/ShapeR/ase-itp-text_280-DiG-sflux-2v_1B/vae-config.yaml"
 URL_DINO = "manifold://efm_public/tree/pretrained_weights/dinov2/dinov2_vitl14_reg4_pretrain.pth"
-URL_T5 = "manifold://efm_public/tree/pretrained_weights/t5/t5-v1_1-xl"
-URL_CLIP = (
-    "manifold://efm_public/tree/pretrained_weights/clip_hf/clip-vit-large-patch14"
-)
 
 DL_OVERRIDE = {}
 
@@ -27,8 +23,6 @@ def setup_download_override(
     path_to_vae,
     path_to_vae_config,
     path_to_dino,
-    path_to_t5,
-    path_to_clip,
 ):
     global DL_OVERRIDE
     DL_OVERRIDE = {
@@ -37,8 +31,6 @@ def setup_download_override(
         URL_VAE: path_to_vae,
         URL_VAE_CONFIG: path_to_vae_config,
         URL_DINO: path_to_dino,
-        URL_T5: path_to_t5,
-        URL_CLIP: path_to_clip,
     }
 
 
