@@ -57,7 +57,7 @@ install_packages() {
   python -m pip install transformers trimesh scikit-image diffusers gradio peft einops
   python -m pip install flash-attn --no-build-isolation --no-cache-dir
   python -m pip install imageio\[ffmpeg\] imageio\[pyav\]
-  python -m pip install pymeshlab sophuspy fast_simplification scikit-learn timm plotly torchdiffeq sentencepiece protobuf
+  python -m pip install pymeshlab sophuspy fast_simplification scikit-learn timm plotly torchdiffeq sentencepiece protobuf pyrender
   # if you have root access the following two steps become easier
   # (just install libsparseshash-dev and then torchsparse 1.4 from the official repo OR whichever way you install torchsparse for the old LRM)
   # but since we assume OD, we have to do it this way; this takes a while, be patient

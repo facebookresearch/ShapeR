@@ -5,8 +5,6 @@
 import argparse
 import os
 
-import time
-
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +22,10 @@ from model.download import setup_checkpoints
 from model.flow_matching.shaper_denoiser import ShapeRDenoiser
 from model.text.hf_embedder import TextFeatureExtractor
 from model.vae3d.autoencoder import MichelangeloLikeAutoencoderWrapper
-from preprocessing.helper import remove_floating_geometry
+from postprocessing.helper import (
+    remove_floating_geometry,
+    visualize_prediction_and_groundtruth,
+)
 from tqdm import tqdm
 
 # @lint-ignore-every PYTHONPICKLEISBAD
@@ -54,6 +55,11 @@ def main():
         "--simplify_mesh",
         action="store_false",
         help="Simplify the mesh.",
+    )
+    parser.add_argument(
+        "--save_visualization",
+        action="store_false",
+        help="Visualize the input, output and ground truth.",
     )
     parser.add_argument(
         "--output_dir",
@@ -150,8 +156,30 @@ def main():
                 use_shifted_sampling=use_shifted_sampling,
             )
             mesh = vae.infer_mesh_from_latents(latents_pred)[0]
+            if args.save_visualization:
+                vis_prd_mesh = mesh.copy()
+                vis_tgt_mesh = trimesh.Trimesh(
+                    vertices=batch["vertices"][0],
+                    faces=batch["faces"][0],
+                )
+                vis_points = batch["semi_dense_points_orig"][0]
+                vis_images = batch["images"][0].float().cpu().numpy()
+                vis_masks = batch["images"][0].float().cpu().clone().numpy()
+                vis_masks[:, 1, :, :] = batch["masks_ingest"][0].float().cpu().numpy()
+
+                visualize_prediction_and_groundtruth(
+                    vis_prd_mesh,
+                    vis_tgt_mesh,
+                    vis_points,
+                    vis_images,
+                    vis_masks,
+                    batch["caption"][0],
+                    sample_name=batch["name"][0],
+                    save_path=os.path.join(output_dir, f"VIS__{batch['name'][0]}.jpg"),
+                )
             # remove floating geometry, keeping only the largest component
             # sometimes not the best way, but usually works out okay most of the time
+
             if args.remove_floating_geometry:
                 mesh = remove_floating_geometry(mesh)
             # simplify the mesh otherwise it will be too large if you mesh it at 128x128x128 resolution

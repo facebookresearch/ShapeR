@@ -8,7 +8,6 @@ import einops
 import numpy as np
 import torch
 import torchsparse
-import trimesh
 from torchsparse.utils.collate import sparse_collate
 
 from .camera import CameraTW, param_to_matrix, rectify_video
@@ -23,22 +22,6 @@ def get_caption(data):
         )
     except Exception as e:
         return "3D object"
-
-
-def remove_floating_geometry(mesh):
-    # Decompose the mesh into connected components
-    components = mesh.split(only_watertight=False)
-    # Find the largest component by comparing the number of faces
-    largest_component = max(components, key=lambda c: c.faces.shape[0])
-    faces_ratio = [
-        c.faces.shape[0] / largest_component.faces.shape[0] for c in components
-    ]
-    qualifying_components = [
-        c for i, c in enumerate(components) if faces_ratio[i] >= 0.05
-    ]
-    # merge the qualifying components
-    largest_component = trimesh.util.concatenate(qualifying_components)
-    return largest_component
 
 
 def get_parameters_from_state_dict(state_dict, filter_key):
