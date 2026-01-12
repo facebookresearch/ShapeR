@@ -9,7 +9,6 @@ from enum import Enum
 from typing import Union
 
 import torch
-from misc import get_local_path
 
 from .utils import _DINOV2_BASE_URL, _make_dinov2_model_name
 
@@ -60,7 +59,6 @@ def _make_dinov2_model(
             arch_name, patch_size, num_register_tokens
         )
         url = _DINOV2_BASE_URL + f"/{model_full_name}_pretrain.pth"
-        url = get_local_path(url)
         state_dict = torch.load(url, map_location="cpu")
         model.load_state_dict(state_dict, strict=True)
 

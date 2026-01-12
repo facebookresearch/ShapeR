@@ -13,7 +13,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-_DINOV2_BASE_URL = "manifold://efm_public/tree/pretrained_weights/dinov2"
+_DINOV2_BASE_URL = "checkpoints"
 
 
 def _make_dinov2_model_name(

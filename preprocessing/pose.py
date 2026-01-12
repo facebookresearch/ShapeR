@@ -167,9 +167,6 @@ def quaternion_to_matrix(quaternions_wxyz: torch.Tensor) -> torch.Tensor:
     Convert rotations given as quaternions to rotation matrices. Input quaternions
     should be in wxyz format, with real part first, imaginary part last.
 
-    The function is copied from `quaternion_to_matrix` in Pytorch3d:
-    fbcode/vision/fair/pytorch3d/pytorch3d/transforms/rotation_conversions.py
-
     Args:
         quaternions: quaternions with real part first,
             as tensor of shape (..., 4).
@@ -387,8 +384,6 @@ class PoseTW(TensorWrapper):
         """
         Convert rotations of shape (..., 3, 3) to a quaternion (..., 4).
         The returned quaternions have real part first, as wxyz.
-        The function is adapted from `matrix_to_quaternion` in Pytorch3d:
-        fbcode/vision/fair/pytorch3d/pytorch3d/transforms/rotation_conversions.py
 
         The major differnece to the original pytorch3d function is that the returned
         quaternions are normalized and have positive real part.

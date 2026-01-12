@@ -161,8 +161,6 @@ def fisheye624_unproject(uv, params, max_iters: int = 5):
 
     Author: Daniel DeTone (ddetone)
     """
-    # Note(nyn): The unprojection sometimes results in NaNs when using Float32.
-    #            A temporary workaround in Perceiver is passing in Float64 (double) parameters, see: fbcode/surreal/perceiver/utils/encoding_utils.py.
 
     assert uv.ndim == 3 or uv.ndim == 4, "Expected batched input shaped Bx(T)xNx2"
     assert uv.shape[-1] == 2
@@ -276,7 +274,6 @@ def fisheye624_unproject(uv, params, max_iters: int = 5):
     xr_yr_norm = xr_yr.norm(p=2, dim=2).reshape(B, N, 1)
     th = xr_yr_norm.clone()
     for _ in range(max_iters):
-        # nyn: fix according to https://fburl.com/code/a87oq7yb.
         th_radial = uv.new_ones(B, N, 1)
         dthd_th = uv.new_ones(B, N, 1)
         for k in range(6):

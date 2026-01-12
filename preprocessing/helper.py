@@ -236,7 +236,6 @@ def rectify_images(images, masks, camera_params):
         # assumes mask's last channel is 1
         video_mask = mask[None, ...]
         video_mask = einops.rearrange(video_mask, "b h w c -> b c h w").float()
-
         cam = CameraTW.from_surreal(
             width=width,
             height=height,
@@ -261,9 +260,9 @@ def rectify_images(images, masks, camera_params):
         rectified_camera_params.append(param_to_matrix(cam_rectified.params[0]))
 
     return (
-        torch.stack(rectified_images, dim=0),
-        torch.stack(rectified_masks, dim=0),
-        torch.stack(rectified_camera_params, dim=0),
+        torch.stack(rectified_images, dim=0).numpy(),
+        torch.stack(rectified_masks, dim=0).numpy(),
+        torch.stack(rectified_camera_params, dim=0).numpy(),
     )
 
 

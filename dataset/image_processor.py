@@ -43,9 +43,9 @@ def get_image_data_based_on_strategy(
         rectified_masks,
         rectified_camera_params,
     ) = rectify_images(
-        np.array([x[1] for x in selected_image_data]),
-        np.array([x[2] for x in selected_image_data]),
-        np.array([x[3] for x in selected_image_data]),
+        torch.from_numpy(np.array([x[1] for x in selected_image_data])),
+        torch.from_numpy(np.array([x[2] for x in selected_image_data])).unsqueeze(-1),
+        torch.from_numpy(np.array([x[3] for x in selected_image_data])),
     )
 
     # rotate if SLAM nebula or just RGB
@@ -69,7 +69,7 @@ def get_image_data_based_on_strategy(
         )
         for i in range(len(rectified_point_masks))
     ]
-    rectified_camera_params = convert_to_4x4(rectified_camera_params)
+    # rectified_camera_params = convert_to_4x4(rectified_camera_params)
     camera_to_worlds = np.stack([x[4] for x in selected_image_data], axis=0)
     if pkl_sample.get("is_nebula", False):
         # rotate the image ccw

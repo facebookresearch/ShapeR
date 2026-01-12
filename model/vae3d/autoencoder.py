@@ -15,7 +15,6 @@ import torch
 import torch.nn as nn
 
 from einops import repeat
-from misc import get_local_path
 from model.vae3d.attention import ResidualCrossAttentionBlock, SelfAttentionTransformer
 from model.vae3d.utils import (
     AutoEncoder,
@@ -198,18 +197,13 @@ class PerceiverCrossAttentionDecoder(nn.Module):
 
 class MichelangeloLikeAutoencoderWrapper:
     def __init__(self, vae_ckpt_path, device):
-        if not vae_ckpt_path.startswith("manifold://"):
-            vae_ckpt_path = "manifold://" + vae_ckpt_path
-
         base_dir = os.path.dirname(vae_ckpt_path)
-        yaml_file = get_local_path(os.path.join(base_dir, "vae-config.yaml"))
+        yaml_file = os.path.join(base_dir, "vae-config.yaml")
         cfg = omegaconf.OmegaConf.load(yaml_file)
         self.model = (
             MichelangeloLikeAutoencoder(**cfg.vae).to(torch.bfloat16).to(device)
         )
-        state_dict = torch.load(
-            get_local_path(vae_ckpt_path), map_location=device, weights_only=False
-        )
+        state_dict = torch.load(vae_ckpt_path, map_location=device, weights_only=False)
         self.model.load_state_dict(state_dict)
         self.model.use_udf_extraction = True
         self.model.udf_iso = 0.35
