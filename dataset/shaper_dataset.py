@@ -2,6 +2,8 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""Dataset classes for loading and preprocessing ShapeR samples."""
+
 import os
 import pickle
 
@@ -16,6 +18,13 @@ from dataset.point_cloud import preprocess_point_cloud
 
 
 class InferenceDataset(torch.utils.data.Dataset):
+    """
+    Dataset for loading preprocessed pickle samples for ShapeR inference.
+
+    Each sample contains: point cloud, images, camera params, and optionally GT mesh.
+    Supports view selection strategies: 'cluster', 'last_n', 'view_angle'.
+    """
+
     def __init__(self, config, paths, override_num_views=None) -> None:
         super().__init__()
         self.config = config
@@ -132,6 +141,12 @@ class InferenceDataset(torch.utils.data.Dataset):
         return sample
 
     def rescale_back(self, idx, mesh, do_transform_to_world: bool = False):
+        """
+        Transform predicted mesh from normalized coords back to original scale.
+
+        The model predicts in [-0.9, 0.9] normalized space. This undoes that
+        normalization and optionally transforms to world coordinates.
+        """
         sample_path = self.paths[idx]
         pkl_sample = pickle.load(open(sample_path, "rb"))
         bounds = pkl_sample["bounds"].numpy()
@@ -149,6 +164,11 @@ class InferenceDataset(torch.utils.data.Dataset):
         return mesh
 
     def custom_collate(self, batch):
+        """
+        Custom collate function for DataLoader.
+
+        Handles: point clouds -> SparseTensor, vertices/faces -> lists (variable size).
+        """
         batch_sdp = preprocess_point_cloud(
             [torch.tensor(b["semi_dense_points"], dtype=torch.float32) for b in batch],
             num_bins=self.config.encoder.num_bins,
@@ -174,6 +194,7 @@ class InferenceDataset(torch.utils.data.Dataset):
 
     @staticmethod
     def move_batch_to_device(batch, device, dtype=torch.float32):
+        """Move all tensors (including SparseTensors) to device with optional dtype conversion."""
         for k, v in batch.items():
             if isinstance(v, torchsparse.SparseTensor) or isinstance(v, torch.Tensor):
                 if (
@@ -187,6 +208,7 @@ class InferenceDataset(torch.utils.data.Dataset):
 
 
 def get_boxes_from_masks(rectified_masks):
+    """Extract bounding boxes from point projection masks in xyxy format."""
     boxes = []
     for i in range(len(rectified_masks)):
         # get bounds and convert to box in xyxy format

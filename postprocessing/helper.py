@@ -2,10 +2,18 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+Postprocessing utilities for ShapeR outputs.
+
+Includes mesh cleanup (floating geometry removal) and visualization functions
+for comparing predictions with ground truth.
+"""
+
 import trimesh
 
 
 def remove_floating_geometry(mesh):
+    """Remove small disconnected components, keeping those with >=5% of largest component's faces."""
     # Decompose the mesh into connected components
     components = mesh.split(only_watertight=False)
     # Find the largest component by comparing the number of faces

@@ -6,6 +6,13 @@
 # Original source: https://github.com/Seed3D/Dora
 # Original license: Apache License 2.0
 
+"""
+3D VAE for mesh generation from latent codes.
+
+Perceiver-style encoder/decoder with cross-attention for encoding point clouds
+and decoding to occupancy/UDF values for mesh extraction.
+"""
+
 import math
 import os
 
@@ -29,6 +36,8 @@ from torch_cluster import fps
 
 
 class SharpCoarseCrossAttentionEncoder(nn.Module):
+    """Perceiver encoder: compresses coarse+sharp point clouds to latent tokens via cross-attention."""
+
     def __init__(
         self,
         use_downsample: bool,
@@ -163,6 +172,8 @@ class SharpCoarseCrossAttentionEncoder(nn.Module):
 
 
 class PerceiverCrossAttentionDecoder(nn.Module):
+    """Perceiver decoder: queries latents at 3D positions to get occupancy/UDF values."""
+
     def __init__(
         self,
         out_dim: int,
@@ -196,6 +207,8 @@ class PerceiverCrossAttentionDecoder(nn.Module):
 
 
 class MichelangeloLikeAutoencoderWrapper:
+    """Convenience wrapper for loading and using the pretrained 3D VAE."""
+
     def __init__(self, vae_ckpt_path, device):
         base_dir = os.path.dirname(vae_ckpt_path)
         yaml_file = os.path.join(base_dir, "vae-config.yaml")
@@ -241,6 +254,13 @@ class MichelangeloLikeAutoencoderWrapper:
 
 
 class MichelangeloLikeAutoencoder(AutoEncoder):
+    """
+    3D VAE with perceiver-style encoder/decoder.
+
+    Encodes surface point clouds to latent tokens, decodes by querying at 3D positions.
+    Supports variable token counts via FPS downsampling.
+    """
+
     def __init__(
         self,
         use_downsample,

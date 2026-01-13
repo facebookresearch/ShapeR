@@ -2,6 +2,11 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+Image processing utilities for ShapeR dataset.
+
+Handles view selection, fisheye rectification, cropping, and preprocessing.
+"""
 
 import io
 import math
@@ -18,7 +23,19 @@ from sklearn.cluster import KMeans
 def get_image_data_based_on_strategy(
     pkl_sample, num_views, scale, is_rgb, strategy="cluster"
 ):
+    """
+    Select and preprocess images using the specified view selection strategy.
 
+    Args:
+        pkl_sample: Pickle sample dict containing images and camera data
+        num_views: Number of views to select
+        scale: Scale factor for normalizing to [-0.9, 0.9]
+        is_rgb: If True, use RGB images; else use SLAM grayscale
+        strategy: 'cluster' (k-means on camera positions), 'last_n', or 'view_angle'
+
+    Returns:
+        Tuple of (rectified_images, point_masks, camera_params, extrinsics)
+    """
     if strategy == "cluster":
         selected_image_data = cluster_and_select_images(
             pkl_sample, num_views, scale, is_rgb
@@ -97,6 +114,7 @@ def convert_to_4x4(camera_params):
 
 
 def rotate_intrinsics_ccw90(cam4x4, new_width):
+    """Rotate camera intrinsics for 90-degree CCW image rotation (Aria Gen2/Nebula)."""
     new_cam4x4 = cam4x4.copy()
     new_cam4x4[0, 0] = cam4x4[1, 1]
     new_cam4x4[1, 1] = cam4x4[0, 0]
@@ -106,6 +124,7 @@ def rotate_intrinsics_ccw90(cam4x4, new_width):
 
 
 def rotate_extrinsics_ccw90(cam4x4):
+    """Rotate camera extrinsics for 90-degree CCW image rotation (Aria Gen2/Nebula)."""
     R_img = np.zeros((3, 3))
     R_img[0, 1] = -1
     R_img[1, 0] = 1
@@ -117,6 +136,7 @@ def rotate_extrinsics_ccw90(cam4x4):
 
 
 def cluster_and_select_images(pkl_sample, num_views, scale, is_rgb):
+    """Select views by clustering camera positions with k-means, picking best from each cluster."""
     (
         visible_points_key,
         camera_model_key,
@@ -192,6 +212,7 @@ def cluster_and_select_images(pkl_sample, num_views, scale, is_rgb):
 
 
 def last_n_view_selection(pkl_sample, num_views, scale, is_rgb):
+    """Select the last N views from the capture sequence."""
     indices_to_return = list(range(len(pkl_sample["Ts_camera_model"])))[-num_views:]
     selected_image_data = index_to_data(indices_to_return, pkl_sample, scale, is_rgb)
     return selected_image_data
@@ -239,6 +260,7 @@ def index_to_data(indices_to_return, pkl_sample, scale, is_rgb):
 
 
 def view_angle_based_strategy(pkl_sample, num_views, scale, is_rgb):
+    """Select views by dividing the hemisphere into regions, picking best view per region."""
     # greedy strategy to select the best views
     N = num_views * 2
     is_nebula = pkl_sample.get("is_nebula", False)
@@ -312,6 +334,7 @@ def view_angle_based_strategy(pkl_sample, num_views, scale, is_rgb):
 
 
 def get_key_names(pkl_sample, is_rgb):
+    """Get the correct pickle keys based on whether using RGB or SLAM images."""
     visible_points_key = (
         "rgb_visible_points_model"
         if is_rgb and "rgb_visible_points_model" in pkl_sample
@@ -362,6 +385,7 @@ def get_valid_uv_fisheye(feye, width, height):
 
 
 def hemisphere_region(x, y, z, num_regions):
+    """Map a camera position to a hemisphere region index for view diversity."""
     phi = math.atan2(y, x)
     if phi < 0:
         phi += 2 * math.pi
@@ -378,6 +402,7 @@ def hemisphere_region(x, y, z, num_regions):
 
 
 def check_object_in_good_view(xywh, isNebula):
+    """Check if object bounding box is well-positioned (centered, not too small/large)."""
     if isNebula:
         H, W = 512, 512
     else:
@@ -400,6 +425,7 @@ def check_object_in_good_view(xywh, isNebula):
 def crop_pad_preselected_views_with_background(
     view_imgs, view_msks_uvs, view_int, crop_size, add_point_locations
 ):
+    """Crop images around object, resize to target size, and optionally overlay point masks."""
     selected_point_uvs = [
         view_msks_uvs[v_idx][:, 1:] for v_idx in range(len(view_imgs))
     ]
@@ -476,6 +502,7 @@ def crop_and_resize(
     mask_m2f=None,
     pad_value=20,
 ):
+    """Crop image around mask, resize preserving aspect ratio, pad to square target size."""
     if camera_intrinsics is not None:
         camera_intrinsics = camera_intrinsics.copy()
     if image_for_box is None:

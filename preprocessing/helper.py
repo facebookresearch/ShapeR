@@ -2,6 +2,13 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+Preprocessing utilities for ShapeR.
+
+Includes fisheye rectification, point cloud processing, camera projection,
+and image cropping/resizing functions.
+"""
+
 from collections import OrderedDict
 
 import einops
@@ -25,6 +32,7 @@ def get_caption(data):
 
 
 def get_parameters_from_state_dict(state_dict, filter_key):
+    """Extract parameters matching a key prefix from a state dict."""
     new_state_dict = OrderedDict()
     for k in state_dict:
         if k.startswith(filter_key):
@@ -79,6 +87,7 @@ def crop_and_resize(
     camera_intrinsics,
     target_size=448,
 ):
+    """Crop image around mask bounding box and resize to target size, updating intrinsics."""
     camera_intrinsics = camera_intrinsics.clone()
     cropped_images = []
     for image_idx in range(image.shape[0]):
@@ -178,6 +187,7 @@ def crop_and_resize(
 
 
 def pad_for_rectification(crops, masks, paddedCropsXYWHC, isNebula):
+    """Pad cropped images back to full frame size for rectification."""
     if isNebula:
         H, W = 512, 512
     else:
@@ -202,6 +212,7 @@ def pad_for_rectification(crops, masks, paddedCropsXYWHC, isNebula):
 
 
 def rectify_images(images, masks, camera_params):
+    """Rectify fisheye images to pinhole projection."""
     rectified_images = []
     rectified_masks = []
     rectified_camera_params = []
@@ -250,6 +261,7 @@ def rectify_images(images, masks, camera_params):
 
 
 def rotate_intrinsics_ccw90(cam4x4, new_width):
+    """Rotate camera intrinsics for 90-degree CCW image rotation."""
     new_cam4x4 = cam4x4.clone()
     new_cam4x4[0, 0] = cam4x4[1, 1]
     new_cam4x4[1, 1] = cam4x4[0, 0]
@@ -259,6 +271,7 @@ def rotate_intrinsics_ccw90(cam4x4, new_width):
 
 
 def rotate_extrinsics_ccw90(cam4x4):
+    """Rotate camera extrinsics for 90-degree CCW image rotation."""
     R_img = torch.zeros((3, 3), device=cam4x4.device)
     R_img[0, 1] = -1
     R_img[1, 0] = 1
@@ -279,6 +292,7 @@ def project_point_to_image(points_world, camera_intrinsics, cam2world, W, H):
 
 
 def plot_dots(uv, W, H):
+    """Render 2D point projections as a binary mask image."""
     # Initialize a blank image
     img = np.zeros((H, W), dtype=np.float32)
 
@@ -299,6 +313,7 @@ def sign_plus(x):
 def project_point_to_image_with_distortion(
     points_zup, T_camera_model, camera_params, image_dims
 ):
+    """Project 3D points to image using FISHEYE624 distortion model."""
     eps = 1e-9
     P = points_zup.shape[0]
     ones = np.ones((P, 1), dtype=points_zup.dtype)

@@ -2,6 +2,16 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+ShapeR Inference Script
+
+Reconstructs 3D meshes from SLAM observations (point clouds + images + text).
+Uses flow matching to generate latent codes, then decodes them via a 3D VAE.
+
+Usage:
+    python infer_shape.py --input_pkl <sample.pkl> --config balance
+"""
+
 import argparse
 import os
 
@@ -30,6 +40,10 @@ from tqdm import tqdm
 
 # @lint-ignore-every PYTHONPICKLEISBAD
 
+# Preset configs: (num_images, token_multiplier, num_denoising_steps)
+# quality: Best results, slowest inference
+# speed: Fastest inference, lower quality
+# balance: Good tradeoff between quality and speed
 preset_configs = {
     "quality": (16, 4, 50),
     "speed": (4, 2, 10),

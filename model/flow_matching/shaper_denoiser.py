@@ -2,6 +2,13 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+ShapeR Denoiser: Flow matching model for 3D shape generation.
+
+Generates latent codes conditioned on point clouds, images, and text.
+Uses a dual-stream transformer architecture with multi-modal conditioning.
+"""
+
 # pyre-unsafe
 
 import copy
@@ -28,6 +35,13 @@ dummy_text_extractor = DummyTextFeatureExtractor(device=None)
 
 
 class ShapeRDenoiser(nn.Module):
+    """
+    Flow matching denoiser for 3D shape reconstruction.
+
+    Conditions on: point clouds (sparse conv), images (DINO), text (T5/CLIP).
+    Generates VAE latent codes that decode to 3D meshes.
+    """
+
     def __init__(self, config):
         super().__init__()
         self.input_types = config.encoder.type
@@ -383,6 +397,19 @@ class ShapeRDenoiser(nn.Module):
         cfg_value=-1,
         use_shifted_sampling=False,
     ):
+        """
+        Generate latent codes from conditioning inputs using ODE solver.
+
+        Args:
+            batch: Dict with point cloud, images, text, camera params
+            token_shape: (batch, num_tokens, embed_dim) for output latents
+            num_steps: Number of ODE solver steps
+            cfg_value: Classifier-free guidance scale (-1 = disabled)
+            use_shifted_sampling: Use Flux-style time shifting
+
+        Returns:
+            Latent codes of shape token_shape
+        """
         step_size = None
         # step_size = 0.01
         if not use_shifted_sampling:
@@ -440,6 +467,8 @@ class ShapeRDenoiser(nn.Module):
 
 
 class WrappedModel(ModelWrapper):
+    """Wraps ShapeRDenoiser for use with ODE solver, handling batch preparation."""
+
     def __init__(
         self,
         model: nn.Module,

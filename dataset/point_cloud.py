@@ -2,6 +2,13 @@
 # This source code is licensed under the CC BY-NC 4.0 license found in the
 # LICENSE file in the root directory of this source tree.
 
+"""
+Point cloud processing utilities.
+
+Handles discretization, normalization, and conversion to SparseTensor for
+efficient 3D sparse convolutions via torchsparse.
+"""
+
 # pyre-unsafe
 
 import numpy as np
