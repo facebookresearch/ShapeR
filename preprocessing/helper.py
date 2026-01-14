@@ -186,9 +186,9 @@ def crop_and_resize(
     return torch.stack(cropped_images, dim=0), camera_intrinsics
 
 
-def pad_for_rectification(crops, masks, paddedCropsXYWHC, isNebula):
+def pad_for_rectification(crops, masks, paddedCropsXYWHC, is_ariagen2):
     """Pad cropped images back to full frame size for rectification."""
-    if isNebula:
+    if is_ariagen2:
         H, W = 512, 512
     else:
         H, W = 480, 640

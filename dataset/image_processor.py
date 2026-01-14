@@ -65,8 +65,8 @@ def get_image_data_based_on_strategy(
         torch.from_numpy(np.array([x[3] for x in selected_image_data])),
     )
 
-    # rotate if SLAM nebula or just RGB
-    if pkl_sample.get("is_nebula", False):
+    # rotate if SLAM Aria Gen2 or just RGB
+    if pkl_sample.get("is_ariagen2", False):
         # rotate the image ccw
         rectified_masks = [rectified_masks[i] for i in range(len(rectified_masks))]
         for im_idx in range(len(rectified_masks)):
@@ -88,7 +88,7 @@ def get_image_data_based_on_strategy(
     ]
     # rectified_camera_params = convert_to_4x4(rectified_camera_params)
     camera_to_worlds = np.stack([x[4] for x in selected_image_data], axis=0)
-    if pkl_sample.get("is_nebula", False):
+    if pkl_sample.get("is_ariagen2", False):
         # rotate the image ccw
         rectified_images = [rectified_images[i] for i in range(len(rectified_images))]
         for im_idx in range(len(rectified_images)):
@@ -114,7 +114,7 @@ def convert_to_4x4(camera_params):
 
 
 def rotate_intrinsics_ccw90(cam4x4, new_width):
-    """Rotate camera intrinsics for 90-degree CCW image rotation (Aria Gen2/Nebula)."""
+    """Rotate camera intrinsics for 90-degree CCW image rotation (Aria Gen2)."""
     new_cam4x4 = cam4x4.copy()
     new_cam4x4[0, 0] = cam4x4[1, 1]
     new_cam4x4[1, 1] = cam4x4[0, 0]
@@ -124,7 +124,7 @@ def rotate_intrinsics_ccw90(cam4x4, new_width):
 
 
 def rotate_extrinsics_ccw90(cam4x4):
-    """Rotate camera extrinsics for 90-degree CCW image rotation (Aria Gen2/Nebula)."""
+    """Rotate camera extrinsics for 90-degree CCW image rotation (Aria Gen2)."""
     R_img = np.zeros((3, 3))
     R_img[0, 1] = -1
     R_img[1, 0] = 1
@@ -263,7 +263,7 @@ def view_angle_based_strategy(pkl_sample, num_views, scale, is_rgb):
     """Select views by dividing the hemisphere into regions, picking best view per region."""
     # greedy strategy to select the best views
     N = num_views * 2
-    is_nebula = pkl_sample.get("is_nebula", False)
+    is_ariagen2 = pkl_sample.get("is_ariagen2", False)
     camera_centers = (
         torch.linalg.inv(pkl_sample["Ts_camera_model"])[:, :3, 3].cpu().numpy()
     )
@@ -291,7 +291,7 @@ def view_angle_based_strategy(pkl_sample, num_views, scale, is_rgb):
             hemisphere_region(camera_center[0], camera_center[1], camera_center[2], N)
         )
         object_in_good_view.append(
-            check_object_in_good_view(paddedCropsXYWHC[cam_idx], is_nebula)
+            check_object_in_good_view(paddedCropsXYWHC[cam_idx], is_ariagen2)
         )
 
     # 0: not occupied, 1: occupied but bad view, 2: occupied and good view
@@ -401,9 +401,9 @@ def hemisphere_region(x, y, z, num_regions):
     return remap[sector]
 
 
-def check_object_in_good_view(xywh, isNebula):
+def check_object_in_good_view(xywh, is_ariagen2):
     """Check if object bounding box is well-positioned (centered, not too small/large)."""
-    if isNebula:
+    if is_ariagen2:
         H, W = 512, 512
     else:
         H, W = 480, 640

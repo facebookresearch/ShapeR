@@ -97,10 +97,10 @@ class DefaultCameraTWDistParam(TensorWrapper):
 DEFAULT_CAM_PARAM = DefaultCameraTWParam()
 DEFAULT_CAM_DIST_PARAM = DefaultCameraTWDistParam()
 DEFAULT_CAM_DATA_SIZE = 34
-DEFAULT_NEBULA_RGB_W = 2016
-DEFAULT_NEBULA_RGB_H = 1512
-DEFAULT_NEBULA_SLAM_H = 512
-DEFAULT_NEBULA_SLAM_W = 512
+DEFAULT_ARIAGEN2_RGB_W = 2016
+DEFAULT_ARIAGEN2_RGB_H = 1512
+DEFAULT_ARIAGEN2_SLAM_H = 512
+DEFAULT_ARIAGEN2_SLAM_W = 512
 
 
 class CameraTW(TensorWrapper):
@@ -223,18 +223,18 @@ class CameraTW(TensorWrapper):
                 hw_ratio = height / width
                 eyevideo_camera_hw_ratio = torch.tensor(240.0 / 640.0).to(hw_ratio)
                 slam_camera_hw_ratio = torch.tensor(480.0 / 640.0).to(hw_ratio)
-                nebula_rgb_camera_hw_ratio = torch.tensor(
-                    DEFAULT_NEBULA_RGB_H / DEFAULT_NEBULA_RGB_W
+                ariagen2_rgb_camera_hw_ratio = torch.tensor(
+                    DEFAULT_ARIAGEN2_RGB_H / DEFAULT_ARIAGEN2_RGB_W
                 ).to(hw_ratio)
                 rgb_camera_hw_ratio = torch.tensor(2880.0 / 2880.0).to(hw_ratio)
-                nebula_hw_match = torch.logical_and(
-                    height == DEFAULT_NEBULA_RGB_H, width == DEFAULT_NEBULA_RGB_W
+                ariagen2_hw_match = torch.logical_and(
+                    height == DEFAULT_ARIAGEN2_RGB_H, width == DEFAULT_ARIAGEN2_RGB_W
                 )
                 guess_rgb = hw_ratio == rgb_camera_hw_ratio
                 guess_slam = hw_ratio == slam_camera_hw_ratio
-                guess_nebula = hw_ratio == nebula_rgb_camera_hw_ratio
-                guess_slam = torch.logical_and(guess_slam, ~nebula_hw_match)
-                guess_nebula = torch.logical_and(guess_nebula, nebula_hw_match)
+                guess_ariagen2 = hw_ratio == ariagen2_rgb_camera_hw_ratio
+                guess_slam = torch.logical_and(guess_slam, ~ariagen2_hw_match)
+                guess_ariagen2 = torch.logical_and(guess_ariagen2, ariagen2_hw_match)
                 guess_eyevideo = hw_ratio == eyevideo_camera_hw_ratio
                 valid_radius = default_radius * torch.ones_like(hw_ratio)
                 # Assume "Rogallo"/"IMX577" aka Aria RGB Camera.
@@ -245,11 +245,11 @@ class CameraTW(TensorWrapper):
                 valid_radius = torch.where(
                     guess_slam, 330 * (height / 480), valid_radius
                 )
-                # Assume Nebula RGB camera.
+                # Assume Aria Gen2 RGB camera.
                 # 2x valid radius since its wrt to unbinned sensor size
                 valid_radius = torch.where(
-                    guess_nebula,
-                    2 * 1512 * (height / DEFAULT_NEBULA_RGB_H),
+                    guess_ariagen2,
+                    2 * 1512 * (height / DEFAULT_ARIAGEN2_RGB_H),
                     valid_radius,
                 )
                 # This is for Eye Video Camera

@@ -23,8 +23,8 @@ def hemisphere_region(x, y, z, num_regions):
     return remap[sector]
 
 
-def check_object_in_good_view(xywh, isNebula):
-    if isNebula:
+def check_object_in_good_view(xywh, is_ariagen2):
+    if is_ariagen2:
         H, W = 512, 512
     else:
         H, W = 480, 640
@@ -44,7 +44,7 @@ def check_object_in_good_view(xywh, isNebula):
 
 
 def dummy_view_selection_strategy(
-    crops, masks, camera_params, Ts_camera_model, paddedCropsXYWHC, N, isNebula
+    crops, masks, camera_params, Ts_camera_model, paddedCropsXYWHC, N, is_ariagen2
 ):
     # return last N items
     return (
@@ -57,7 +57,7 @@ def dummy_view_selection_strategy(
 
 
 def view_angle_based_strategy(
-    crops, masks, camera_params, Ts_camera_model, paddedCropsXYWHC, num_views, isNebula
+    crops, masks, camera_params, Ts_camera_model, paddedCropsXYWHC, num_views, is_ariagen2
 ):
     N = num_views * 2
     camera_centers = torch.linalg.inv(Ts_camera_model)[:, :3, 3].cpu().numpy()
@@ -68,7 +68,7 @@ def view_angle_based_strategy(
             hemisphere_region(camera_center[0], camera_center[1], camera_center[2], N)
         )
         object_in_good_view.append(
-            check_object_in_good_view(paddedCropsXYWHC[cam_idx], isNebula)
+            check_object_in_good_view(paddedCropsXYWHC[cam_idx], is_ariagen2)
         )
     region_views_occupied = [False] * N
     region_view_indices = [None] * N

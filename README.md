@@ -79,4 +79,4 @@ ShapeR/
 
 ## License
 
-This source code is licensed under the CC BY-NC 4.0 license. See the [LICENSE](LICENSE) file for details.
+The majority of ShapeR is licensed under CC-BY-NC. See the [LICENSE](LICENSE) file for details. However portions of the project are available under separate license terms: see [NOTICE](NOTICE).

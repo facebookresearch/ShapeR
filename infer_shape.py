@@ -14,7 +14,6 @@ Usage:
 
 import argparse
 import os
-
 from pathlib import Path
 
 import numpy as np
@@ -25,7 +24,6 @@ import torch
 # since torchsparse changed their datastructures in newer versions
 
 import trimesh
-
 from dataset.download import setup_data
 from dataset.shaper_dataset import InferenceDataset
 from model.download import setup_checkpoints
@@ -57,7 +55,7 @@ def main():
     parser.add_argument(
         "--input_pkl",
         type=str,
-        default="ADT_seq140M1292__BlackBarStool_B.pkl",
+        default="ADT1292__stool.pkl",
         help="Path to the input pkl file which contains the processed observations for the detected bbox.",
     )
     parser.add_argument(
