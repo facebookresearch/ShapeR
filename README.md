@@ -4,7 +4,7 @@
 
 ShapeR introduces a novel approach to metric shape generation. Given an input image sequence, preprocessing extracts per-object metric sparse SLAM points, images, poses, and captions using off-the-shelf methods. A rectified flow transformer operating on VecSet latents conditions on these multimodal inputs to generate a shape code, which is decoded into the object’s mesh. By applying the model object-centrically to each detected object, we obtain a metric reconstruction of the entire scene.
 
-[Project Page](http://facebookresearch.github.io/ShapeR)  |  [Paper](resources/ShapeR.pdf)  |  [Video](https://www.youtube.com/watch?v=EbY30KAA55I)  |  [HF-Model](https://huggingface.co/facebook/ShapeR/)  |  [HF Evaluation Dataset](https://huggingface.co/datasets/facebook/ShapeR-Evaluation)
+[Project Page](http://facebookresearch.github.io/ShapeR)  |  [Paper](https://cdn.jsdelivr.net/gh/facebookresearch/ShapeR@main/resources/ShapeR.pdf)  |  [Video](https://www.youtube.com/watch?v=EbY30KAA55I)  |  [HF-Model](https://huggingface.co/facebook/ShapeR/)  |  [HF Evaluation Dataset](https://huggingface.co/datasets/facebook/ShapeR-Evaluation)
 
 ## Installation
 
