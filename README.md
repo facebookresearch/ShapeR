@@ -90,5 +90,13 @@ The majority of ShapeR is licensed under CC-BY-NC. See the [LICENSE](LICENSE) fi
 If you find ShapeR useful for your research, please cite our paper:
 
 ```bibtex
-# TODO: add bibtex
+@misc{siddiqui2026shaperrobustconditional3d,
+      title={ShapeR: Robust Conditional 3D Shape Generation from Casual Captures}, 
+      author={Yawar Siddiqui and Duncan Frost and Samir Aroudj and Armen Avetisyan and Henry Howard-Jenkins and Daniel DeTone and Pierre Moulon and Qirui Wu and Zhengqin Li and Julian Straub and Richard Newcombe and Jakob Engel},
+      year={2026},
+      eprint={2601.11514},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV},
+      url={https://arxiv.org/abs/2601.11514}, 
+}
 ```
