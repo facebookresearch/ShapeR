@@ -90,6 +90,11 @@ def main():
         action="store_true",
         help="Transform the mesh to world coordinates.",
     )
+    parser.add_argument(
+        "--is_local_path",
+        action="store_true",
+        help="Do not sync the sample from HF, since it exists locally at the given path.",
+    )
 
     args = parser.parse_args()
 
@@ -98,7 +103,9 @@ def main():
     # example override of weights stored in /home/yawarnihal/shaper_weights
     # todo: once the checkpoints are on huggingface, adjust this
     setup_checkpoints()
-    setup_data(args.input_pkl)
+
+    if not args.is_local_path:
+        setup_data(args.input_pkl)
 
     output_dir = Path(args.output_dir)
     if not output_dir.exists():
@@ -139,12 +146,13 @@ def main():
     use_shifted_sampling = (
         getattr(config.fm_transformer, "time_sampler", "lognorm") == "flux"
     )
+    sample_path = os.path.join("data", args.input_pkl) if not args.is_local_path else args.input_pkl
 
     # create batch sample
     print("Loading input pkl from", args.input_pkl)
     inference_dataset = InferenceDataset(
         config,
-        paths=[os.path.join("data", args.input_pkl)],
+        paths=[sample_path],
         override_num_views=num_images,
     )
     inference_loader = torch.utils.data.DataLoader(
