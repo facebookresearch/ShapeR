@@ -106,6 +106,51 @@ def get_image_data_based_on_strategy(
     )
 
 
+def get_image_data_dav3_workaround(pkl_sample, num_views, scale, is_rgb, strategy="cluster"):
+    buffer = io.BytesIO(pkl_sample["image_data"][0])
+    decoded_image = Image.open(buffer)
+    decoded_image = decoded_image.convert("L")
+    rectified_images = [decoded_image]
+    buffer = io.BytesIO(pkl_sample["mask_data"][0])
+    decoded_image = Image.open(buffer)
+    decoded_image = decoded_image.convert("L")
+    rectified_masks = [decoded_image]
+    rectified_camera_params = convert_to_4x4(pkl_sample["camera_params"])
+    for im_idx in range(len(rectified_masks)):
+        rectified_masks[im_idx] = np.rot90(rectified_masks[im_idx], 1)
+    rectified_masks = np.stack(rectified_masks)
+    rectified_point_masks = [
+        np.where(rectified_masks[i] > 0) for i in range(len(rectified_masks))
+    ]
+    rectified_point_masks = [
+        np.stack(
+            [
+                np.ones_like(rectified_point_masks[i][1]) * i,
+                rectified_point_masks[i][1],
+                rectified_point_masks[i][0],
+            ],
+            axis=1,
+        )
+        for i in range(len(rectified_point_masks))
+    ]
+
+    camera_to_worlds = np.stack([pkl_sample["camera_to_worlds"][0]], axis=0)
+
+    for im_idx in range(len(rectified_images)):
+        rectified_images[im_idx] = np.rot90(rectified_images[im_idx], 1)
+        rectified_camera_params[im_idx] = rotate_intrinsics_ccw90(
+            rectified_camera_params[im_idx], rectified_images[im_idx].shape[0]
+        )
+        camera_to_worlds[im_idx] = rotate_extrinsics_ccw90(camera_to_worlds[im_idx])
+    rectified_images = np.stack(rectified_images)
+
+    return (
+        rectified_images,
+        rectified_point_masks,
+        rectified_camera_params,
+        camera_to_worlds.astype(np.float32),
+    )
+
 def convert_to_4x4(camera_params):
     camera_param_4x4 = [np.eye(4) for _ in range(len(camera_params))]
     for i, c in enumerate(camera_params):
